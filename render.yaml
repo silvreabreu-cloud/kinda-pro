@@ -1,0 +1,7 @@
+services:
+    - type: web
+    name: kinda-pro
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 app:app
