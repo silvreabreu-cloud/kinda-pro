@@ -1,17 +1,15 @@
 import os
-from flask import Flask, request, session, redirect, url_for, render_template_string
+from flask import Flask, request, session, redirect
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
-app.secret_key = 'kinda-2026-seguro'  # troca depois
+app.secret_key = 'kinda-super-secreto-2026'
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- SENHA GERADA PELO TEU EMAIL ---
-# Senha = silvreabreu-cloud + 2026
-ADMIN_USER = "silvreabreu-cloud"
-ADMIN_PASS = os.environ.get("ADMIN_PASS", "silvestreabreu@2026!")
+# SENHA - pode ser mudada no Render em Environment
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "923729647")
 
-# --- CONFIGS DA LOJA ---
 WHATSAPP = "923729647"
 
 produtos = [
@@ -20,28 +18,40 @@ produtos = [
 ]
 
 LOGIN_HTML = """
-<form method="POST" style="padding:50px;font-family:sans-serif">
-<h2>Admin Kinda</h2>
-<input name="user" placeholder="Usuário"><br><br>
-<input name="pass" type="password" placeholder="Senha"><br><br>
-<button>Entrar</button>
+<div style="max-width:400px;margin:100px auto;padding:30px;border:1px solid #ccc;border-radius:10px;font-family:sans-serif;text-align:center">
+<h2>🔐 Admin Kinda Pro</h2>
+<form method="POST">
+<input name="pass" type="password" placeholder="Digite a senha" style="width:100%;padding:12px;margin:10px 0" required><br>
+<button style="width:100%;padding:12px;background:black;color:white;border:0;border-radius:5px">ENTRAR</button>
 </form>
+<p style="font-size:12px;color:#666">Senha padrão: 923729647</p>
+</div>
 """
 
 @app.route('/admin/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        if request.form['user'] == ADMIN_USER and request.form['pass'] == ADMIN_PASS:
+        if request.form.get('pass') == ADMIN_PASS:
             session['admin'] = True
             return redirect('/admin/produtos')
-        return "Senha errada! <a href='/admin/login'>tentar novamente</a>"
+        return LOGIN_HTML + "<p style='color:red'>❌ Senha errada!</p>"
     return LOGIN_HTML
 
 @app.route('/admin/produtos')
 def admin_prod():
     if not session.get('admin'):
         return redirect('/admin/login')
-    return f"<h1>Admin - {len(produtos)} produtos</h1><a href='/'>Ver loja</a> | <a href='/admin/logout'>Sair</a><br><br>{produtos}"
+    html = f"""
+    <div style="font-family:sans-serif;padding:20px">
+    <h1>Admin Kinda - {len(produtos)} produtos</h1>
+    <a href='/'>Ver loja</a> | <a href='/admin/logout'>Sair</a> | WhatsApp: {WHATSAPP}
+    <hr>
+    <pre>{produtos}</pre>
+    <hr>
+    <p>Senha atual: {ADMIN_PASS}</p>
+    </div>
+    """
+    return html
 
 @app.route('/admin/logout')
 def logout():
@@ -50,7 +60,7 @@ def logout():
 
 @app.route('/')
 def loja():
-    return f"<h1>Kinda Loja - WhatsApp {WHATSAPP}</h1>{produtos}"
+    return f"<h1>Kinda Loja - WhatsApp {WHATSAPP}</h1><p>Admin: /admin/login</p><p>{produtos}</p>"
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
